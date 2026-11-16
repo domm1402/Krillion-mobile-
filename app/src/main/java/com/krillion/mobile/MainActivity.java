@@ -1,36 +1,21 @@
 package com.krillion.mobile;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.webkit.WebChromeClient;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebSettings;
-import android.view.View;
-import android.graphics.Color;
-
-public class MainActivity extends Activity {
-  private WebView web;
-  @Override public void onCreate(Bundle saved) {
-    super.onCreate(saved);
-    getWindow().setStatusBarColor(Color.BLACK);
-    getWindow().setNavigationBarColor(Color.BLACK);
-    web = new WebView(this);
-    web.setBackgroundColor(Color.BLACK);
-    WebSettings s = web.getSettings();
-    s.setJavaScriptEnabled(true);
-    s.setDomStorageEnabled(true);
-    s.setMediaPlaybackRequiresUserGesture(false);
-    s.setSupportZoom(false);
-    s.setBuiltInZoomControls(false);
-    s.setDisplayZoomControls(false);
-    s.setLoadWithOverviewMode(true);
-    s.setUseWideViewPort(true);
-    web.setWebViewClient(new WebViewClient());
-    web.setWebChromeClient(new WebChromeClient());
-    web.setOverScrollMode(View.OVER_SCROLL_NEVER);
-    setContentView(web);
-    web.loadUrl("https://krillion.io/");
-  }
-  @Override public void onBackPressed() { if(web!=null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
+import android.app.*;import android.os.*;import android.graphics.*;import android.graphics.drawable.*;import android.view.*;import android.view.inputmethod.InputMethodManager;import android.content.*;import android.widget.*;import java.util.*;
+public class MainActivity extends Activity{
+ int teal=Color.rgb(15,190,178),navy=Color.rgb(4,23,48),card=Color.rgb(12,43,69);LinearLayout root;TextView timerView;EditText answer;Handler h=new Handler();int q=0,score=0,seconds=25;boolean active=false;int[] pts=new int[7];String[] ans=new String[7];
+ String[] prompts={"Name a bird","Name a country with the letter B","Name a fictional weapon","Name a job focused on repairing things","Name a sport involving a board","Name a chemical element with 6 or fewer letters","Name a body part above the waist (not the head)"};
+ Runnable tick=new Runnable(){public void run(){if(!active)return;seconds--;timerView.setText(seconds+"s");if(seconds<=0){active=false;resolve("");}else h.postDelayed(this,1000);}};
+ public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(navy);getWindow().setNavigationBarColor(navy);home();}
+ GradientDrawable bg(int c,int r){GradientDrawable d=new GradientDrawable();d.setColor(c);d.setCornerRadius(r);return d;}
+ TextView txt(String s,int z,int c){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);t.setGravity(17);return t;}
+ void base(){root=new LinearLayout(this);root.setOrientation(1);root.setGravity(17);root.setPadding(22,15,22,18);root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{Color.rgb(3,17,39),Color.rgb(0,74,100)}));setContentView(root);}
+ void heading(){TextView t=txt("KRILLION",30,Color.WHITE);t.setTypeface(null,1);root.addView(t);}
+ Button btn(String s){Button b=new Button(this);b.setText(s);b.setTextColor(-1);b.setTextSize(16);b.setAllCaps(false);b.setBackground(bg(teal,26));return b;}
+ void home(){base();heading();root.addView(txt("RARE ANSWERS. DEEPER DIVES.",14,teal));root.addView(txt("🐟",72,-1));root.addView(txt("THE DAILY DIVE",25,-1));root.addView(txt("7 prompts  •  25 seconds each\n700 maximum points\nEvery point = 10 metres",17,Color.LTGRAY));Button b=btn("BEGIN THE DIVE  ↓");root.addView(b,new LinearLayout.LayoutParams(-1,64));b.setOnClickListener(v->{q=score=0;Arrays.fill(pts,0);Arrays.fill(ans,"");play();});Button rules=btn("HOW SCORING WORKS");root.addView(rules,new LinearLayout.LayoutParams(-1,52));rules.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Rarity tiers").setMessage("Plankton 10 • Too Clever 15 • Schooler 30 • Rare 60 • Deep Cut 85 • One in a Krillion 100\n\nThis native prototype uses sample scoring, not the official live answer database.").setPositiveButton("OK",null).show());}
+ void play(){base();heading();root.addView(txt("SCORE "+score+"     DEPTH "+score*10+"m",16,teal));root.addView(txt("PROMPT "+(q+1)+" / 7",15,Color.LTGRAY));timerView=txt("25s",24,Color.YELLOW);root.addView(timerView);TextView question=txt(prompts[q],23,-1);question.setPadding(12,25,12,25);question.setBackground(bg(card,22));root.addView(question,new LinearLayout.LayoutParams(-1,150));answer=new EditText(this);answer.setSingleLine(true);answer.setTextColor(-1);answer.setHintTextColor(Color.LTGRAY);answer.setHint("Your answer…");answer.setTextSize(18);answer.setBackground(bg(Color.rgb(20,55,78),16));root.addView(answer,new LinearLayout.LayoutParams(-1,58));Button submit=btn("DIVE ↓");root.addView(submit,new LinearLayout.LayoutParams(-1,58));Button pass=btn("PASS");root.addView(pass,new LinearLayout.LayoutParams(-1,48));submit.setOnClickListener(v->{if(active){active=false;h.removeCallbacks(tick);((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(answer.getWindowToken(),0);resolve(answer.getText().toString().trim());}});pass.setOnClickListener(v->{active=false;h.removeCallbacks(tick);resolve("");});seconds=25;active=true;h.postDelayed(tick,1000);}
+ int rarity(String a){String x=a.toLowerCase(Locale.ROOT);if(x.isEmpty())return 0;String[][] k={{"eagle","sparrow","pigeon","robin","crow"},{"brazil","belgium","barbados","bahamas","bahrain"},{"lightsaber","excalibur","mjolnir","batarang"},{"mechanic","plumber","electrician","watchmaker"},{"surfing","snowboarding","skateboarding","wakeboarding"},{"carbon","oxygen","helium","iron","silver"},{"shoulder","elbow","rib","wrist","heart"}};for(String s:k[q])if(x.equals(s))return 10;return x.length()>7?60:30;}
+ String tier(int p){return p>=85?"DEEP CUT":p>=60?"RARE":p>=30?"SCHOOLER":p>=15?"TOO CLEVER":p>0?"PLANKTON":"MISS";}
+ void resolve(String a){ans[q]=a;pts[q]=rarity(a);score+=pts[q];new AlertDialog.Builder(this).setTitle(a.isEmpty()?"MISS":tier(pts[q])+" • "+pts[q]+" pts").setMessage(a.isEmpty()?"No answer.":"+"+pts[q]*10+" metres\n\nIllustrative prototype scoring.").setCancelable(false).setPositiveButton(q==6?"RESULTS":"NEXT",(d,w)->{q++;if(q<7)play();else results();}).show();}
+ String zone(){int m=score*10;return m<200?"SUNLIGHT ZONE":m<1000?"TWILIGHT ZONE":m<4000?"MIDNIGHT ZONE":m<6000?"ABYSSAL ZONE":"HADAL ZONE";}
+ void results(){base();heading();root.addView(txt("DIVE COMPLETE",20,teal));root.addView(txt(score+" / 700 POINTS",28,-1));root.addView(txt("↓ "+score*10+" METRES",32,teal));root.addView(txt(zone(),18,Color.LTGRAY));for(int i=0;i<7;i++)root.addView(txt((i+1)+". "+ans[i]+" • "+pts[i]+" pts",14,-1));Button again=btn("PLAY AGAIN");root.addView(again,new LinearLayout.LayoutParams(-1,56));again.setOnClickListener(v->home());Button share=btn("SHARE RESULT");root.addView(share,new LinearLayout.LayoutParams(-1,50));share.setOnClickListener(v->{Intent in=new Intent(Intent.ACTION_SEND);in.setType("text/plain");in.putExtra(Intent.EXTRA_TEXT,"Krillion dive "+score+"/700 • "+score*10+"m");startActivity(Intent.createChooser(in,"Share"));});}
+ @Override public void onBackPressed(){active=false;h.removeCallbacks(tick);home();}
 }
